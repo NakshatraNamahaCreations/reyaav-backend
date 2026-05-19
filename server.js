@@ -9,6 +9,10 @@ import { verifyMailer } from "./config/mailer.js";
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Render (and most PaaS) put a proxy in front of the app; trust one hop so
+// express-rate-limit can read the real client IP from X-Forwarded-For.
+app.set("trust proxy", 1);
+
 app.use(
   cors({
     origin: process.env.CLIENT_ORIGIN || "http://localhost:5173",
