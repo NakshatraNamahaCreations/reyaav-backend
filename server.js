@@ -13,9 +13,20 @@ const PORT = process.env.PORT || 5000;
 // express-rate-limit can read the real client IP from X-Forwarded-For.
 app.set("trust proxy", 1);
 
+const allowedOrigins = (process.env.CLIENT_ORIGIN || "http://localhost:5173")
+  .split(",")
+  .map((o) => o.trim().replace(/\/$/, ""))
+  .filter(Boolean);
+
 app.use(
   cors({
-    origin: process.env.CLIENT_ORIGIN || "http://localhost:5173",
+    origin(origin, callback) {
+      // Allow same-origin / non-browser requests (Postman, curl) which omit Origin
+      if (!origin) return callback(null, true);
+      const normalized = origin.replace(/\/$/, "");
+      if (allowedOrigins.includes(normalized)) return callback(null, true);
+      return callback(new Error(`Origin ${origin} not allowed by CORS`));
+    },
   })
 );
 app.use(express.json({ limit: "100kb" }));
